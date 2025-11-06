@@ -1,13 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+    Command,
+    CommandDialog,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+    CommandSeparator,
+} from "@/components/ui/command";
 import { Separator } from "@/components/ui/separator";
 
-// MOCK: troque depois por chamada à sua API /api/clients?q=
+// MOCK: troque depois por GET /api/clients?q=
 const MOCK_CLIENTS = [
     { id: "c1", name: "Maria Santos", doc: "123.***.***-**" },
     { id: "c2", name: "João Oliveira", doc: "987.***.***-**" },
@@ -18,8 +27,21 @@ const MOCK_CLIENTS = [
 
 export default function ReportRootPage() {
     const router = useRouter();
+    const [open, setOpen] = useState(false);
     const [q, setQ] = useState("");
-    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    // Spotlight (Cmd+K / Ctrl+K)
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+                e.preventDefault();
+                setOpen((v) => !v);
+            }
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, []);
 
     const results = useMemo(() => {
         const s = q.trim().toLowerCase();
@@ -28,14 +50,12 @@ export default function ReportRootPage() {
             (c) =>
                 c.name.toLowerCase().includes(s) ||
                 c.doc.toLowerCase().includes(s) ||
-                c.id.toLowerCase() === s
+                c.id.toLowerCase().includes(s)
         );
     }, [q]);
 
-    function openClient(id?: string | null) {
-        const target = id ?? selectedId ?? results.at(0)?.id;
-        if (!target) return;
-        router.push(`/${target}/overview?page=cover`);
+    function openClient(id: string) {
+        router.push(`/${id}/overview?page=cover`);
     }
 
     return (
@@ -48,77 +68,89 @@ export default function ReportRootPage() {
                 </div>
             </header>
 
-            <main className="mx-auto max-w-7xl px-4 py-8 grid gap-6">
-                <div className="max-w-3xl">
+            <main className="mx-auto max-w-7xl px-4 py-10 grid gap-6">
+                <div className="max-w-3xl space-y-1">
                     <h1 className="text-2xl font-semibold tracking-tight">Escolher cliente</h1>
                     <p className="text-sm text-muted-foreground">
-                        Busque por nome, documento ou ID e abra o relatório para visualizar por seções.
+                        Pressione <kbd className="px-1 py-0.5 border rounded">Ctrl</kbd>+<kbd className="px-1 py-0.5 border rounded">K</kbd> (ou <kbd className="px-1 py-0.5 border rounded">⌘</kbd>+<kbd className="px-1 py-0.5 border rounded">K</kbd>) para abrir o Spotlight.
                     </p>
                 </div>
 
                 <Card className="p-4 max-w-3xl">
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-2">
-                            <Input
-                                placeholder="Buscar cliente… (ex.: Maria, 123, c1)"
-                                value={q}
-                                onChange={(e) => setQ(e.target.value)}
-                                onKeyDown={(e) => e.key === "Enter" && openClient()}
-                                className="flex-1"
-                            />
-                            <Button onClick={() => openClient()}>Abrir</Button>
+                            <Button variant="secondary" onClick={() => { setOpen(true); }}>
+                                Abrir Spotlight
+                            </Button>
+                            <Separator orientation="vertical" className="h-6" />
+                            <div className="text-sm text-muted-foreground">
+                                Ou use o atalho de teclado.
+                            </div>
                         </div>
 
                         <Separator />
 
+                        {/* Lista rápida em linha (além do Spotlight) */}
                         <div className="grid gap-2">
-                            {results.length === 0 && (
-                                <div className="text-sm text-muted-foreground px-1 py-3">
-                                    Nenhum cliente encontrado.
+                            {MOCK_CLIENTS.map((c) => (
+                                <div key={c.id} className="flex items-center justify-between rounded-md border px-3 py-2">
+                                    <div className="flex flex-col">
+                                        <span className="font-medium">{c.name}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                            {c.doc} • ID: {c.id}
+                                        </span>
+                                    </div>
+                                    <Button variant="outline" size="sm" onClick={() => openClient(c.id)}>
+                                        Visualizar
+                                    </Button>
                                 </div>
-                            )}
-
-                            {results.map((c) => {
-                                const active = selectedId === c.id;
-                                return (
-                                    <button
-                                        key={c.id}
-                                        onClick={() => setSelectedId(c.id)}
-                                        onDoubleClick={() => openClient(c.id)}
-                                        className={[
-                                            "flex w-full items-center justify-between rounded-md border px-3 py-2 text-left",
-                                            active ? "bg-accent/60" : "hover:bg-accent/40",
-                                        ].join(" ")}
-                                        title="Clique para selecionar, duplo clique para abrir"
-                                    >
-                                        <div className="flex flex-col">
-                                            <span className="font-medium">{c.name}</span>
-                                            <span className="text-xs text-muted-foreground">
-                                                {c.doc} • ID: {c.id}
-                                            </span>
-                                        </div>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                openClient(c.id);
-                                            }}
-                                        >
-                                            Visualizar
-                                        </Button>
-                                    </button>
-                                );
-                            })}
+                            ))}
                         </div>
                     </div>
                 </Card>
-
-                <div className="max-w-3xl text-sm text-muted-foreground">
-                    Dica: depois de abrir, use a navegação lateral por <strong>Seções</strong> e, dentro de
-                    cada seção, o índice de <strong>Páginas</strong> para ir direto à parte do relatório.
-                </div>
             </main>
+
+            {/* Spotlight Command */}
+            <CommandDialog open={open} onOpenChange={setOpen}>
+                <Command shouldFilter={false}>
+                    <CommandInput
+                        ref={inputRef}
+                        placeholder="Buscar por nome, documento ou ID…"
+                        value={q}
+                        onValueChange={setQ}
+                    />
+                    <CommandList>
+                        <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+
+                        <CommandGroup heading="Clientes">
+                            {results.map((c) => (
+                                <CommandItem
+                                    key={c.id}
+                                    value={`${c.name} ${c.doc} ${c.id}`}
+                                    onSelect={() => {
+                                        setOpen(false);
+                                        openClient(c.id);
+                                    }}
+                                >
+                                    <div className="flex flex-col">
+                                        <span className="font-medium">{c.name}</span>
+                                        <span className="text-xs opacity-70">
+                                            {c.doc} • ID: {c.id}
+                                        </span>
+                                    </div>
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+
+                        <CommandSeparator />
+
+                        <CommandGroup heading="Ações">
+                            <CommandItem onSelect={() => setQ("")}>Limpar busca</CommandItem>
+                            <CommandItem onSelect={() => setOpen(false)}>Fechar</CommandItem>
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </CommandDialog>
         </div>
     );
 }

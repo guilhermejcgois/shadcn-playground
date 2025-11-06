@@ -120,3 +120,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  @page { size: A4; margin: 16mm 14mm; }
+  .page { page-break-after: always; break-inside: avoid; }
+  header, nav, .print\:hidden { display: none !important; }
+  .shadow, .ring { box-shadow: none !important; }
+}

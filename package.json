@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "got": "docker run --rm -p 3001:3000 --name gotenberg -e DISABLE_GOOGLE_CHROME=0 gotenberg/gotenberg:8",
+    "got:linux": "docker run --rm -p 3001:3000 --name gotenberg -e DISABLE_GOOGLE_CHROME=0 gotenberg/gotenberg:8 --add-host=host.docker.internal:host-gateway"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -14,8 +16,8 @@
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-navigation-menu": "^1.2.14",
     "@radix-ui/react-scroll-area": "^1.2.10",
-    "@radix-ui/react-separator": "^1.1.7",
-    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-separator": "^1.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tabs": "^1.1.13",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
