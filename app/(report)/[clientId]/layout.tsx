@@ -1,9 +1,13 @@
+'use client';
+
 import { Topbar } from "./_components/topbar";
 import { SectionRail } from "./_components/section-rail";
+import { useParams } from "next/navigation";
 
 export default function ClientLayout({
-    params, children,
-}: { params: { clientId: string }; children: React.ReactNode }) {
+    children,
+}: { children: React.ReactNode }) {
+    const params = useParams<{clientId: string}>();
     return (
         <div className="min-h-dvh">
             <Topbar clientId={params.clientId} />

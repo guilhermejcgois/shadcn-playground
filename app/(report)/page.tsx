@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,20 +16,41 @@ import {
 } from "@/components/ui/command";
 import { Separator } from "@/components/ui/separator";
 
-// MOCK: troque depois por GET /api/clients?q=
-const MOCK_CLIENTS = [
-    { id: "c1", name: "Maria Santos", doc: "123.***.***-**" },
-    { id: "c2", name: "João Oliveira", doc: "987.***.***-**" },
-    { id: "c3", name: "Family Office Alfa", doc: "12.345.678/0001-**" },
-    { id: "c4", name: "Carlos Lima", doc: "456.***.***-**" },
-    { id: "c5", name: "Beatriz Souza", doc: "654.***.***-**" },
-];
 
 export default function ReportRootPage() {
     const router = useRouter();
     const [open, setOpen] = useState(false);
     const [q, setQ] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
+    const [results, setResults] = useState<{ id: string; name: string; doc: string }[]>([]);
+
+    useEffect(() => {
+        const ctrl = new AbortController();
+        let isMounted = true;
+
+        const load = async () => {
+            try {
+                const url = q ? `/api/clients?q=${encodeURIComponent(q)}` : `/api/clients`;
+                const r = await fetch(url, { signal: ctrl.signal, cache: "no-store" });
+
+                if (isMounted) {
+                    setResults(await r.json());
+                }
+            } catch (err) {
+                if ((err as Error).name === "AbortError") {
+                    return;
+                }
+                console.error("Erro ao buscar clientes:", err);
+            }
+        };
+
+        load();
+
+        return () => {
+            isMounted = false;
+            ctrl.abort();
+        };
+    }, [q]);
 
     // Spotlight (Cmd+K / Ctrl+K)
     useEffect(() => {
@@ -42,17 +63,6 @@ export default function ReportRootPage() {
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
     }, []);
-
-    const results = useMemo(() => {
-        const s = q.trim().toLowerCase();
-        if (!s) return MOCK_CLIENTS;
-        return MOCK_CLIENTS.filter(
-            (c) =>
-                c.name.toLowerCase().includes(s) ||
-                c.doc.toLowerCase().includes(s) ||
-                c.id.toLowerCase().includes(s)
-        );
-    }, [q]);
 
     function openClient(id: string) {
         router.push(`/${id}/overview?page=cover`);
@@ -92,7 +102,7 @@ export default function ReportRootPage() {
 
                         {/* Lista rápida em linha (além do Spotlight) */}
                         <div className="grid gap-2">
-                            {MOCK_CLIENTS.map((c) => (
+                            {results.map((c) => (
                                 <div key={c.id} className="flex items-center justify-between rounded-md border px-3 py-2">
                                     <div className="flex flex-col">
                                         <span className="font-medium">{c.name}</span>

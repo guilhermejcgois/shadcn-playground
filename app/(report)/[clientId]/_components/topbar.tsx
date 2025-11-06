@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export function Topbar({ clientId }: { clientId: string }) {
     const router = useRouter();
@@ -19,7 +20,7 @@ export function Topbar({ clientId }: { clientId: string }) {
                     </SheetContent>
                 </Sheet>
 
-                <div className="font-semibold">Relatórios</div>
+                <div className="font-semibold"><Link href="/">Relatórios</Link></div>
                 <div className="ml-auto flex items-center gap-2">
                     <Input className="w-64 hidden md:block" placeholder="Buscar cliente..." />
                     <Button variant="outline" onClick={() => router.push(`/print/${clientId}`)}>
