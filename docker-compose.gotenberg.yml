@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    ports: ["3001:3000"]
+    environment:
+      DISABLE_GOOGLE_CHROME: "0"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

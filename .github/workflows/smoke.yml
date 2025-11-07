@@ -1,0 +1,29 @@
+name: Smoke E2E
+
+on: [push]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      gotenberg:
+        image: gotenberg/gotenberg:8
+        ports:
+          - 3001:3000
+        options: >-
+          --health-cmd="wget -qO- http://localhost:3000/health || exit 1"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+        env:
+          DISABLE_GOOGLE_CHROME: "0"
+    env:
+      BASE_URL: http://localhost:3000
+      GOT_URL: http://localhost:3001
+      PUBLIC_BASE_URL: http://localhost:3000
+      GOTENBERG_URL: http://localhost:3001
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - run: npm run test:smoke
